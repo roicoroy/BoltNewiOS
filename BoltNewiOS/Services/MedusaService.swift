@@ -56,12 +56,35 @@ class MedusaService: ObservableObject {
                 return
             }
             
-            let decoder = JSONDecoder()
-            let productsResponse = try decoder.decode(MedusaProductsResponse.self, from: data)
+            // Debug: Print the raw JSON response
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Raw JSON Response:")
+                print(jsonString)
+            }
             
-            await MainActor.run {
-                self.products = productsResponse.products
-                self.isLoading = false
+            let decoder = JSONDecoder()
+            
+            // Try to decode the response
+            do {
+                let productsResponse = try decoder.decode(MedusaProductsResponse.self, from: data)
+                
+                await MainActor.run {
+                    self.products = productsResponse.products
+                    self.isLoading = false
+                }
+            } catch let decodingError {
+                print("Decoding error: \(decodingError)")
+                
+                // Try to decode just the structure to see what's missing
+                if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) {
+                    print("JSON Structure:")
+                    print(jsonObject)
+                }
+                
+                await MainActor.run {
+                    self.errorMessage = "Failed to decode products: \(decodingError.localizedDescription)"
+                    self.isLoading = false
+                }
             }
             
         } catch {

@@ -58,10 +58,10 @@ struct MedusaProduct: Codable, Identifiable {
 }
 
 struct ProductType: Codable {
-    let id: String
-    let value: String
-    let createdAt: String
-    let updatedAt: String
+    let id: String?
+    let value: String?
+    let createdAt: String?
+    let updatedAt: String?
     
     enum CodingKeys: String, CodingKey {
         case id, value
@@ -71,11 +71,11 @@ struct ProductType: Codable {
 }
 
 struct ProductCollection: Codable {
-    let id: String
-    let title: String
-    let handle: String
-    let createdAt: String
-    let updatedAt: String
+    let id: String?
+    let title: String?
+    let handle: String?
+    let createdAt: String?
+    let updatedAt: String?
     
     enum CodingKeys: String, CodingKey {
         case id, title, handle
@@ -87,7 +87,7 @@ struct ProductCollection: Codable {
 struct ProductOption: Codable, Identifiable {
     let id: String
     let title: String
-    let metadata: [String: String]?
+    let metadata: AnyCodable?
     let productId: String
     let createdAt: String
     let updatedAt: String
@@ -106,7 +106,7 @@ struct ProductOption: Codable, Identifiable {
 struct ProductOptionValue: Codable, Identifiable {
     let id: String
     let value: String
-    let metadata: [String: String]?
+    let metadata: AnyCodable?
     let optionId: String
     let createdAt: String
     let updatedAt: String
@@ -137,7 +137,7 @@ struct ProductTag: Codable, Identifiable {
 struct ProductImage: Codable, Identifiable {
     let id: String
     let url: String
-    let metadata: [String: String]?
+    let metadata: AnyCodable?
     let rank: Int
     let productId: String
     let createdAt: String
@@ -170,7 +170,7 @@ struct ProductVariant: Codable, Identifiable {
     let length: String?
     let height: String?
     let width: String?
-    let metadata: [String: String]?
+    let metadata: AnyCodable?
     let variantRank: Int
     let productId: String
     let createdAt: String
@@ -196,7 +196,7 @@ struct ProductVariant: Codable, Identifiable {
 struct VariantOption: Codable, Identifiable {
     let id: String
     let value: String
-    let metadata: [String: String]?
+    let metadata: AnyCodable?
     let optionId: String
     let option: ProductOption
     let createdAt: String
@@ -209,6 +209,62 @@ struct VariantOption: Codable, Identifiable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case deletedAt = "deleted_at"
+    }
+}
+
+// MARK: - Helper for handling dynamic metadata
+struct AnyCodable: Codable {
+    let value: Any
+    
+    init<T>(_ value: T?) {
+        self.value = value ?? ()
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        
+        if container.decodeNil() {
+            self.value = ()
+        } else if let bool = try? container.decode(Bool.self) {
+            self.value = bool
+        } else if let int = try? container.decode(Int.self) {
+            self.value = int
+        } else if let double = try? container.decode(Double.self) {
+            self.value = double
+        } else if let string = try? container.decode(String.self) {
+            self.value = string
+        } else if let array = try? container.decode([AnyCodable].self) {
+            self.value = array.map { $0.value }
+        } else if let dictionary = try? container.decode([String: AnyCodable].self) {
+            self.value = dictionary.mapValues { $0.value }
+        } else {
+            self.value = ()
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        
+        switch value {
+        case is Void:
+            try container.encodeNil()
+        case let bool as Bool:
+            try container.encode(bool)
+        case let int as Int:
+            try container.encode(int)
+        case let double as Double:
+            try container.encode(double)
+        case let string as String:
+            try container.encode(string)
+        case let array as [Any]:
+            let anyArray = array.map { AnyCodable($0) }
+            try container.encode(anyArray)
+        case let dictionary as [String: Any]:
+            let anyDict = dictionary.mapValues { AnyCodable($0) }
+            try container.encode(anyDict)
+        default:
+            try container.encodeNil()
+        }
     }
 }
 
