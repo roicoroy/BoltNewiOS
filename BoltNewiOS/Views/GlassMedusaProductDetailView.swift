@@ -70,23 +70,7 @@ struct GlassMedusaProductDetailView: View {
                                             .frame(height: 320)
                                             .clipped()
                                     } placeholder: {
-                                        Rectangle()
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color(.systemGray6),
-                                                        Color(.systemGray5)
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                )
-                                            )
-                                            .frame(height: 320)
-                                            .overlay(
-                                                ProgressView()
-                                                    .scaleEffect(1.5)
-                                                    .tint(.white)
-                                            )
+                                        GlassDetailImagePlaceholder(height: 320)
                                     }
                                     .tag(index)
                                 }
@@ -381,6 +365,117 @@ struct GlassMedusaProductDetailView: View {
     
     private func updateSelectedVariant() {
         selectedVariant = availableVariants.first
+    }
+}
+
+struct GlassDetailImagePlaceholder: View {
+    let height: CGFloat
+    @State private var isAnimating = false
+    @State private var shimmerOffset: CGFloat = -300
+    @State private var pulseScale: CGFloat = 1.0
+    
+    var body: some View {
+        ZStack {
+            // Base gradient background with depth
+            LinearGradient(
+                colors: [
+                    Color(.systemGray6).opacity(0.9),
+                    Color(.systemGray5).opacity(0.7),
+                    Color(.systemGray4).opacity(0.5),
+                    Color(.systemGray5).opacity(0.7),
+                    Color(.systemGray6).opacity(0.9)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .frame(height: height)
+            
+            // Animated shimmer effect
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            .white.opacity(0.6),
+                            .white.opacity(0.8),
+                            .white.opacity(0.6),
+                            .clear
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: height)
+                .offset(x: shimmerOffset)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: false)) {
+                        shimmerOffset = 300
+                    }
+                }
+            
+            // Glass overlay with subtle animation
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .opacity(0.4)
+                .frame(height: height)
+                .scaleEffect(pulseScale)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                        pulseScale = 1.02
+                    }
+                }
+            
+            // Enhanced loading indicator
+            VStack(spacing: 16) {
+                // Circular progress indicator
+                ZStack {
+                    Circle()
+                        .stroke(.white.opacity(0.3), lineWidth: 3)
+                        .frame(width: 40, height: 40)
+                    
+                    Circle()
+                        .trim(from: 0, to: 0.7)
+                        .stroke(
+                            LinearGradient(
+                                colors: [.white.opacity(0.9), .blue.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                        )
+                        .frame(width: 40, height: 40)
+                        .rotationEffect(.degrees(isAnimating ? 360 : 0))
+                        .animation(.linear(duration: 1.0).repeatForever(autoreverses: false), value: isAnimating)
+                }
+                
+                // Loading text with fade animation
+                Text("Loading image...")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white.opacity(0.9))
+                    .opacity(isAnimating ? 0.6 : 1.0)
+                    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: isAnimating)
+                
+                // Animated dots
+                HStack(spacing: 6) {
+                    ForEach(0..<3) { index in
+                        Circle()
+                            .fill(.white.opacity(0.8))
+                            .frame(width: 6, height: 6)
+                            .scaleEffect(isAnimating ? 1.3 : 0.7)
+                            .animation(
+                                .easeInOut(duration: 0.8)
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(index) * 0.2),
+                                value: isAnimating
+                            )
+                    }
+                }
+            }
+            .onAppear {
+                isAnimating = true
+            }
+        }
     }
 }
 

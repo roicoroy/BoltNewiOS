@@ -10,7 +10,6 @@ import SwiftUI
 struct GlassMedusaProductCard: View {
     let product: MedusaProduct
     @State private var imageLoaded = false
-    @State private var isPressed = false
     
     var body: some View {
         GlassCard(cornerRadius: 20, shadowRadius: 15) {
@@ -29,23 +28,7 @@ struct GlassMedusaProductCard: View {
                                 }
                             }
                     } placeholder: {
-                        Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color(.systemGray6),
-                                        Color(.systemGray5)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(height: 160)
-                            .overlay(
-                                ProgressView()
-                                    .scaleEffect(1.2)
-                                    .tint(.white)
-                            )
+                        GlassImagePlaceholder(height: 160)
                     }
                     
                     // Glass overlay for image
@@ -169,6 +152,82 @@ struct GlassMedusaProductCard: View {
         .scaleEffect(imageLoaded ? 1.0 : 0.9)
         .opacity(imageLoaded ? 1.0 : 0.7)
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: imageLoaded)
+    }
+}
+
+struct GlassImagePlaceholder: View {
+    let height: CGFloat
+    @State private var isAnimating = false
+    @State private var shimmerOffset: CGFloat = -200
+    
+    var body: some View {
+        ZStack {
+            // Base gradient background
+            LinearGradient(
+                colors: [
+                    Color(.systemGray6).opacity(0.8),
+                    Color(.systemGray5).opacity(0.6),
+                    Color(.systemGray6).opacity(0.8)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .frame(height: height)
+            
+            // Shimmer effect
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            .white.opacity(0.4),
+                            .clear
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: height)
+                .offset(x: shimmerOffset)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: false)) {
+                        shimmerOffset = 200
+                    }
+                }
+            
+            // Glass overlay
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .opacity(0.3)
+                .frame(height: height)
+            
+            // Loading indicator
+            VStack(spacing: 12) {
+                // Animated loading dots
+                HStack(spacing: 8) {
+                    ForEach(0..<3) { index in
+                        Circle()
+                            .fill(.white.opacity(0.8))
+                            .frame(width: 8, height: 8)
+                            .scaleEffect(isAnimating ? 1.2 : 0.8)
+                            .animation(
+                                .easeInOut(duration: 0.6)
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(index) * 0.2),
+                                value: isAnimating
+                            )
+                    }
+                }
+                
+                Text("Loading...")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            .onAppear {
+                isAnimating = true
+            }
+        }
     }
 }
 
