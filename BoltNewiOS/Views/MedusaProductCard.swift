@@ -1,5 +1,5 @@
 //
-//  ProductCard.swift
+//  MedusaProductCard.swift
 //  BoltNewiOS
 //
 //  Created by Ricardo Bento on 24/06/2025.
@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-struct ProductCard: View {
-    let product: Product
+struct MedusaProductCard: View {
+    let product: MedusaProduct
     @State private var imageLoaded = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Product Image
-            AsyncImage(url: URL(string: product.imageURL)) { image in
+            AsyncImage(url: URL(string: product.primaryImage)) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -38,7 +38,7 @@ struct ProductCard: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 // Product Name
-                Text(product.name)
+                Text(product.title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .lineLimit(2)
@@ -64,7 +64,7 @@ struct ProductCard: View {
                 
                 // Price and Stock Status
                 HStack {
-                    Text("$\(String(format: "%.2f", product.price))")
+                    Text("$\(String(format: "%.2f", product.basePrice))")
                         .font(.subheadline)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
@@ -91,6 +91,16 @@ struct ProductCard: View {
                             .cornerRadius(4)
                     }
                 }
+                
+                // Category
+                Text(product.category.uppercased())
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.blue)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(6)
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
@@ -104,14 +114,33 @@ struct ProductCard: View {
 }
 
 #Preview {
-    ProductCard(product: Product(
-        name: "iPhone 15 Pro",
-        price: 999.99,
-        description: "The most advanced iPhone yet",
-        category: "Electronics",
-        imageURL: "https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg",
-        rating: 4.8,
-        reviewCount: 1247
+    MedusaProductCard(product: MedusaProduct(
+        id: "prod_01JYTRJ9389X398ZWSVVFCF40Y",
+        title: "Medusa Sweatshirt",
+        subtitle: nil,
+        description: "Reimagine the feeling of a classic sweatshirt. With our cotton sweatshirt, everyday essentials no longer have to be ordinary.",
+        handle: "sweatshirt",
+        isGiftcard: false,
+        discountable: true,
+        thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatshirt-vintage-front.png",
+        collectionId: nil,
+        typeId: nil,
+        weight: "400",
+        length: nil,
+        height: nil,
+        width: nil,
+        hsCode: nil,
+        originCountry: nil,
+        midCode: nil,
+        material: nil,
+        createdAt: "2025-06-28T07:55:53.313Z",
+        updatedAt: "2025-06-28T07:55:53.313Z",
+        type: nil,
+        collection: nil,
+        options: [],
+        tags: [],
+        images: [],
+        variants: []
     ))
     .padding()
     .frame(width: 180)

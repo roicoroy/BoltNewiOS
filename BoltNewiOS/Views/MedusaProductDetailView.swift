@@ -1,5 +1,5 @@
 //
-//  ProductDetailView.swift
+//  MedusaProductDetailView.swift
 //  BoltNewiOS
 //
 //  Created by Ricardo Bento on 24/06/2025.
@@ -7,16 +7,35 @@
 
 import SwiftUI
 
-struct ProductDetailView: View {
-    let product: Product
+struct MedusaProductDetailView: View {
+    let product: MedusaProduct
     @Environment(\.dismiss) private var dismiss
     @State private var selectedImageIndex = 0
     @State private var showingFullDescription = false
     @State private var quantity = 1
+    @State private var selectedVariant: ProductVariant?
+    @State private var selectedOptions: [String: String] = [:]
     
-    // Sample additional images for demo
     private var productImages: [String] {
-        [product.imageURL, product.imageURL, product.imageURL]
+        product.allImages.isEmpty ? [product.primaryImage] : product.allImages
+    }
+    
+    private var availableVariants: [ProductVariant] {
+        if selectedOptions.isEmpty {
+            return product.variants
+        }
+        
+        return product.variants.filter { variant in
+            selectedOptions.allSatisfy { optionTitle, selectedValue in
+                variant.options.contains { variantOption in
+                    variantOption.option.title == optionTitle && variantOption.value == selectedValue
+                }
+            }
+        }
+    }
+    
+    private var currentVariant: ProductVariant? {
+        return selectedVariant ?? availableVariants.first
     }
     
     var body: some View {
@@ -61,10 +80,17 @@ struct ProductDetailView: View {
                             .cornerRadius(8)
                         
                         // Product Name
-                        Text(product.name)
+                        Text(product.title)
                             .font(.title2)
                             .fontWeight(.bold)
                             .lineLimit(nil)
+                        
+                        // Subtitle if available
+                        if let subtitle = product.subtitle {
+                            Text(subtitle)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
                         
                         // Rating and Reviews
                         HStack(spacing: 12) {
@@ -91,7 +117,7 @@ struct ProductDetailView: View {
                         
                         // Price and Stock
                         HStack {
-                            Text("$\(String(format: "%.2f", product.price))")
+                            Text("$\(String(format: "%.2f", product.basePrice))")
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(.primary)
@@ -109,9 +135,62 @@ struct ProductDetailView: View {
                                     .foregroundColor(product.isInStock ? .green : .red)
                             }
                         }
+                        
+                        // SKU if available
+                        if let sku = currentVariant?.sku {
+                            Text("SKU: \(sku)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
                     
                     Divider()
+                    
+                    // Product Options
+                    if !product.options.isEmpty {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Options")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            
+                            ForEach(product.options) { option in
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(option.title)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                    
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 8) {
+                                            ForEach(option.values) { value in
+                                                Button(action: {
+                                                    selectedOptions[option.title] = value.value
+                                                    updateSelectedVariant()
+                                                }) {
+                                                    Text(value.value)
+                                                        .font(.subheadline)
+                                                        .fontWeight(.medium)
+                                                        .padding(.horizontal, 12)
+                                                        .padding(.vertical, 8)
+                                                        .background(
+                                                            selectedOptions[option.title] == value.value ? 
+                                                            Color.blue : Color(.systemGray6)
+                                                        )
+                                                        .foregroundColor(
+                                                            selectedOptions[option.title] == value.value ? 
+                                                            .white : .primary
+                                                        )
+                                                        .cornerRadius(8)
+                                                }
+                                            }
+                                        }
+                                        .padding(.horizontal, 20)
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Divider()
+                    }
                     
                     // Description Section
                     VStack(alignment: .leading, spacing: 12) {
@@ -119,12 +198,12 @@ struct ProductDetailView: View {
                             .font(.headline)
                             .fontWeight(.semibold)
                         
-                        Text(product.productDescription)
+                        Text(product.description)
                             .font(.body)
                             .foregroundColor(.secondary)
                             .lineLimit(showingFullDescription ? nil : 3)
                         
-                        if product.productDescription.count > 100 {
+                        if product.description.count > 100 {
                             Button(action: {
                                 withAnimation(.easeInOut(duration: 0.3)) {
                                     showingFullDescription.toggle()
@@ -269,19 +348,55 @@ struct ProductDetailView: View {
                 .frame(height: 100)
             )
         }
+        .onAppear {
+            initializeSelectedOptions()
+        }
+    }
+    
+    private func initializeSelectedOptions() {
+        // Initialize with first available option for each product option
+        for option in product.options {
+            if let firstValue = option.values.first {
+                selectedOptions[option.title] = firstValue.value
+            }
+        }
+        updateSelectedVariant()
+    }
+    
+    private func updateSelectedVariant() {
+        selectedVariant = availableVariants.first
     }
 }
 
 #Preview {
     NavigationStack {
-        ProductDetailView(product: Product(
-            name: "iPhone 15 Pro Max",
-            price: 1199.99,
-            description: "The most advanced iPhone yet with titanium design, A17 Pro chip, and revolutionary camera system. Experience the future of mobile technology with unprecedented performance and stunning photography capabilities.",
-            category: "Electronics",
-            imageURL: "https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg",
-            rating: 4.8,
-            reviewCount: 1247
+        MedusaProductDetailView(product: MedusaProduct(
+            id: "prod_01JYTRJ9389X398ZWSVVFCF40Y",
+            title: "Medusa Sweatshirt",
+            subtitle: "Premium Cotton Blend",
+            description: "Reimagine the feeling of a classic sweatshirt. With our cotton sweatshirt, everyday essentials no longer have to be ordinary. This premium piece combines comfort with style, featuring a modern fit and exceptional quality materials.",
+            handle: "sweatshirt",
+            isGiftcard: false,
+            discountable: true,
+            thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatshirt-vintage-front.png",
+            collectionId: nil,
+            typeId: nil,
+            weight: "400",
+            length: nil,
+            height: nil,
+            width: nil,
+            hsCode: nil,
+            originCountry: nil,
+            midCode: nil,
+            material: nil,
+            createdAt: "2025-06-28T07:55:53.313Z",
+            updatedAt: "2025-06-28T07:55:53.313Z",
+            type: nil,
+            collection: nil,
+            options: [],
+            tags: [],
+            images: [],
+            variants: []
         ))
     }
 }
