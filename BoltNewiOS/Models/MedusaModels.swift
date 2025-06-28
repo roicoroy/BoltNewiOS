@@ -101,6 +101,21 @@ struct ProductOption: Codable, Identifiable {
         case updatedAt = "updated_at"
         case deletedAt = "deleted_at"
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        metadata = try container.decodeIfPresent(AnyCodable.self, forKey: .metadata)
+        productId = try container.decode(String.self, forKey: .productId)
+        createdAt = try container.decode(String.self, forKey: .createdAt)
+        updatedAt = try container.decode(String.self, forKey: .updatedAt)
+        deletedAt = try container.decodeIfPresent(String.self, forKey: .deletedAt)
+        
+        // Handle values array - it might be missing in some cases
+        values = try container.decodeIfPresent([ProductOptionValue].self, forKey: .values) ?? []
+    }
 }
 
 struct ProductOptionValue: Codable, Identifiable {
@@ -209,6 +224,54 @@ struct VariantOption: Codable, Identifiable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case deletedAt = "deleted_at"
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try container.decode(String.self, forKey: .id)
+        value = try container.decode(String.self, forKey: .value)
+        metadata = try container.decodeIfPresent(AnyCodable.self, forKey: .metadata)
+        optionId = try container.decode(String.self, forKey: .optionId)
+        createdAt = try container.decode(String.self, forKey: .createdAt)
+        updatedAt = try container.decode(String.self, forKey: .updatedAt)
+        deletedAt = try container.decodeIfPresent(String.self, forKey: .deletedAt)
+        
+        // Handle nested option - create a simplified version to avoid circular reference
+        let optionContainer = try container.nestedContainer(keyedBy: ProductOption.CodingKeys.self, forKey: .option)
+        let optionId = try optionContainer.decode(String.self, forKey: .id)
+        let optionTitle = try optionContainer.decode(String.self, forKey: .title)
+        let optionMetadata = try optionContainer.decodeIfPresent(AnyCodable.self, forKey: .metadata)
+        let optionProductId = try optionContainer.decode(String.self, forKey: .productId)
+        let optionCreatedAt = try optionContainer.decode(String.self, forKey: .createdAt)
+        let optionUpdatedAt = try optionContainer.decode(String.self, forKey: .updatedAt)
+        let optionDeletedAt = try optionContainer.decodeIfPresent(String.self, forKey: .deletedAt)
+        
+        // Create option without values to avoid circular reference
+        option = ProductOption(
+            id: optionId,
+            title: optionTitle,
+            metadata: optionMetadata,
+            productId: optionProductId,
+            createdAt: optionCreatedAt,
+            updatedAt: optionUpdatedAt,
+            deletedAt: optionDeletedAt,
+            values: [] // Empty to avoid circular reference
+        )
+    }
+}
+
+// Add custom initializer for ProductOption to handle manual creation
+extension ProductOption {
+    init(id: String, title: String, metadata: AnyCodable?, productId: String, createdAt: String, updatedAt: String, deletedAt: String?, values: [ProductOptionValue]) {
+        self.id = id
+        self.title = title
+        self.metadata = metadata
+        self.productId = productId
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
+        self.values = values
     }
 }
 
