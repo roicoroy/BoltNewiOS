@@ -141,10 +141,14 @@ struct GlassMedusaHomeView: View {
                                     GridItem(.flexible(), spacing: 16)
                                 ], spacing: 20) {
                                     ForEach(filteredProducts) { product in
-                                        NavigationLink {
-                                            GlassMedusaProductDetailView(product: product)
-                                        } label: {
-                                            GlassMedusaProductCard(product: product)
+                                        Button(action: {
+                                            // Debug print to see if button is being tapped
+                                            print("Product tapped: \(product.title)")
+                                        }) {
+                                            NavigationLink(destination: GlassMedusaProductDetailView(product: product)) {
+                                                GlassMedusaProductCard(product: product)
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                     }

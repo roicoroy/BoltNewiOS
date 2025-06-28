@@ -139,7 +139,7 @@ struct GlassMedusaProductCard: View {
                         
                         // Add to cart button
                         Button(action: {
-                            // Add to cart action - this button won't interfere with navigation
+                            // Add to cart action
                             print("Added \(product.title) to cart")
                         }) {
                             Image(systemName: "plus")
@@ -160,24 +160,15 @@ struct GlassMedusaProductCard: View {
                         }
                         .disabled(!product.isInStock)
                         .opacity(product.isInStock ? 1.0 : 0.5)
-                        .onTapGesture {
-                            // Prevent this button tap from triggering navigation
-                        }
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 16)
             }
         }
-        .scaleEffect(isPressed ? 0.95 : (imageLoaded ? 1.0 : 0.9))
+        .scaleEffect(imageLoaded ? 1.0 : 0.9)
         .opacity(imageLoaded ? 1.0 : 0.7)
-        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isPressed)
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: imageLoaded)
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = pressing
-            }
-        }, perform: {})
     }
 }
 
