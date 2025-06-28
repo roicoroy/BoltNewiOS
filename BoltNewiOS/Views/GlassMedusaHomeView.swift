@@ -141,7 +141,9 @@ struct GlassMedusaHomeView: View {
                                     GridItem(.flexible(), spacing: 16)
                                 ], spacing: 20) {
                                     ForEach(filteredProducts) { product in
-                                        NavigationLink(destination: GlassMedusaProductDetailView(product: product)) {
+                                        NavigationLink {
+                                            GlassMedusaProductDetailView(product: product)
+                                        } label: {
                                             GlassMedusaProductCard(product: product)
                                         }
                                         .buttonStyle(PlainButtonStyle())

@@ -138,7 +138,10 @@ struct GlassMedusaProductCard: View {
                         Spacer()
                         
                         // Add to cart button
-                        Button(action: {}) {
+                        Button(action: {
+                            // Add to cart action - this button won't interfere with navigation
+                            print("Added \(product.title) to cart")
+                        }) {
                             Image(systemName: "plus")
                                 .font(.caption)
                                 .fontWeight(.bold)
@@ -157,6 +160,9 @@ struct GlassMedusaProductCard: View {
                         }
                         .disabled(!product.isInStock)
                         .opacity(product.isInStock ? 1.0 : 0.5)
+                        .onTapGesture {
+                            // Prevent this button tap from triggering navigation
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
@@ -167,17 +173,11 @@ struct GlassMedusaProductCard: View {
         .opacity(imageLoaded ? 1.0 : 0.7)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isPressed)
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: imageLoaded)
-        .onTapGesture {
+        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
             withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = true
+                isPressed = pressing
             }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    isPressed = false
-                }
-            }
-        }
+        }, perform: {})
     }
 }
 
@@ -212,34 +212,37 @@ struct RoundedCorner: Shape {
                 GridItem(.flexible(), spacing: 16)
             ], spacing: 20) {
                 ForEach(0..<4) { _ in
-                    GlassMedusaProductCard(product: MedusaProduct(
-                        id: "prod_01JYTRJ9389X398ZWSVVFCF40Y",
-                        title: "Medusa Sweatshirt",
-                        subtitle: nil,
-                        description: "Reimagine the feeling of a classic sweatshirt.",
-                        handle: "sweatshirt",
-                        isGiftcard: false,
-                        discountable: true,
-                        thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatshirt-vintage-front.png",
-                        collectionId: nil,
-                        typeId: nil,
-                        weight: "400",
-                        length: nil,
-                        height: nil,
-                        width: nil,
-                        hsCode: nil,
-                        originCountry: nil,
-                        midCode: nil,
-                        material: nil,
-                        createdAt: "2025-06-28T07:55:53.313Z",
-                        updatedAt: "2025-06-28T07:55:53.313Z",
-                        type: nil,
-                        collection: nil,
-                        options: [],
-                        tags: [],
-                        images: [],
-                        variants: []
-                    ))
+                    NavigationLink(destination: Text("Product Detail")) {
+                        GlassMedusaProductCard(product: MedusaProduct(
+                            id: "prod_01JYTRJ9389X398ZWSVVFCF40Y",
+                            title: "Medusa Sweatshirt",
+                            subtitle: nil,
+                            description: "Reimagine the feeling of a classic sweatshirt.",
+                            handle: "sweatshirt",
+                            isGiftcard: false,
+                            discountable: true,
+                            thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatshirt-vintage-front.png",
+                            collectionId: nil,
+                            typeId: nil,
+                            weight: "400",
+                            length: nil,
+                            height: nil,
+                            width: nil,
+                            hsCode: nil,
+                            originCountry: nil,
+                            midCode: nil,
+                            material: nil,
+                            createdAt: "2025-06-28T07:55:53.313Z",
+                            updatedAt: "2025-06-28T07:55:53.313Z",
+                            type: nil,
+                            collection: nil,
+                            options: [],
+                            tags: [],
+                            images: [],
+                            variants: []
+                        ))
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
             .padding(.horizontal, 20)
